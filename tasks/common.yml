@@ -1,0 +1,82 @@
+---
+# vim: set ft=ansible:
+
+- name: Copy over virtual network definition files
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/tmp"
+    owner: root
+    group: root
+    mode: 0644
+  loop:
+    - ocp4-net.xml
+    - ocp4-prov-net.xml
+
+- name: Check if ocp4-net network is already configured
+  ansible.builtin.command: virsh net-dumpxml ocp4-net
+  register: ocp4_net_return
+  failed_when: ocp4_net_return.rc > 1
+
+- name: Enable OpenShift base network (192.168.123.100/24)
+  ansible.builtin.shell: "{{ item }}"
+  loop:
+    - "virsh net-define /tmp/ocp4-net.xml"
+    - "virsh net-start ocp4-net"
+    - "virsh net-autostart ocp4-net"
+  when: ocp4_net_return.rc == 1
+
+- name: Check if base RHEL/CentOS 8 already disk image exists
+  stat:
+    path: /var/lib/libvirt/images/centos8-kvm.qcow2
+  register: base_result
+
+- name: Downloading CentOS 8 base image
+  ansible.builtin.get_url:
+    url: https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20220125.1.x86_64.qcow2
+    dest: /var/lib/libvirt/images/centos8-kvm.qcow2
+    mode: 0644
+  when: not base_result.stat.exists
+
+- name: Copy over ifcfg-eth0 for bastion VM
+  ansible.builtin.copy:
+    src: "ifcfg-eth0"
+    dest: "/tmp"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Check if Bastion disk image already exists - don't clobber
+  stat:
+    path: /var/lib/libvirt/images/ocp4-bastion.qcow2
+  register: bastion_result
+
+- name: Creating and customising Bastion VM image from CentOS 8 template
+  ansible.builtin.shell: "{{ item }}"
+  loop:
+    - "qemu-img create -f qcow2 /var/lib/libvirt/images/ocp4-bastion.qcow2 -b /var/lib/libvirt/images/centos8-kvm.qcow2 -F qcow2 200G"
+    - "virt-resize --expand /dev/sda1 /var/lib/libvirt/images/centos8-kvm.qcow2 /var/lib/libvirt/images/ocp4-bastion.qcow2"
+    - "virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --uninstall cloud-init"
+    - "virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --root-password password:redhat"
+    - "virt-copy-in -a /var/lib/libvirt/images/ocp4-bastion.qcow2 /tmp/ifcfg-eth0 /etc/sysconfig/network-scripts"
+    - "virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --run-command \"mkdir -p /root/.ssh/ && chmod -R 0700 /root/.ssh/\""
+    - "virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --run-command \"restorecon -Rv /root/.ssh/\""
+  when: not bastion_result.stat.exists
+
+- name: Check if Bastion is defined
+  ansible.builtin.command: virsh dumpxml ocp4-bastion
+  register: bastion_defined
+  failed_when: bastion_defined.rc > 1
+
+- name: Check if ssh-key already exists
+  ansible.builtin.stat:
+    path: "/root/.ssh/id_rsa"
+  register: root_ssh_key
+
+- name: Generate ssh-key for connectivity across deployments
+  openssh_keypair:
+    path: "/root/.ssh/id_rsa"
+    type: rsa
+    size: 4096
+    state: present
+    force: no
+  when: not root_ssh_key.stat.exists

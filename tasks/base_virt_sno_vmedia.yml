@@ -19,7 +19,7 @@
 
 - name: Build Bastion VM definition for SNO ISO Install
   ansible.builtin.command: >
-    virt-install --virt-type kvm --ram {{ vms.bastion.mem }} --vcpus {{ vms.bastion.cpus }} --cpu=host-passthrough --os-variant rhel8.1
+    virt-install --virt-type kvm --boot uefi --ram {{ vms.bastion.mem }} --vcpus {{ vms.bastion.cpus }} --cpu=host-passthrough --os-variant rhel8.1
     --disk path=/var/lib/libvirt/images/ocp4-bastion.qcow2,device=disk,bus=virtio,format=qcow2
     --network network:ocp4-net,mac={{ vms.bastion.base_network }}
     --boot hd --noautoconsole --vnc --name ocp4-bastion --noreboot
