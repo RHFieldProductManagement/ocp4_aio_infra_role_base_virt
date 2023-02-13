@@ -122,7 +122,7 @@
 
 - name: Downloading CentOS 8 base image
   ansible.builtin.get_url:
-    url: https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20220125.1.x86_64.qcow2
+    url: https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20220913.0.x86_64.qcow2
     dest: /var/lib/libvirt/images/centos8-kvm.qcow2
     mode: 0644
   when: not base_result.stat.exists
@@ -147,6 +147,7 @@
     - "virt-resize --expand /dev/sda1 /var/lib/libvirt/images/centos8-kvm.qcow2 /var/lib/libvirt/images/ocp4-bastion.qcow2"
     - "virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --uninstall cloud-init"
     - "virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --root-password password:{{ ocp4_aio_root_password }}"
+    - "virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --update
     - "virt-copy-in -a /var/lib/libvirt/images/ocp4-bastion.qcow2 /tmp/ifcfg-eth0 /etc/sysconfig/network-scripts"
     - "virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --run-command \"mkdir -p /root/.ssh/ && chmod -R 0700 /root/.ssh/\""
     - "virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --run-command \"restorecon -Rv /root/.ssh/\""
