@@ -1,0 +1,6 @@
+[mongodb]
+baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/3.6/x86_64/
+enabled=true
+gpgcheck=true
+gpgkey=https://www.mongodb.org/static/pgp/server-3.6.asc
+name=MongoDB Repository

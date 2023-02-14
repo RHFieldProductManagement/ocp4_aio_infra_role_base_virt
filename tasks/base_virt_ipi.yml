@@ -135,6 +135,14 @@
     group: root
     mode: 0644
 
+- name: Copy over mongodb repo for centos base img VM
+  ansible.builtin.copy:
+    src: "mongodb-org-3.6.repo"
+    dest: "/tmp"
+    owner: root
+    group: root
+    mode: 0644
+
 - name: Check if Bastion disk image already exists - don't clobber
   stat:
     path: /var/lib/libvirt/images/ocp4-bastion.qcow2
@@ -152,6 +160,11 @@
     - "virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --run-command \"mkdir -p /root/.ssh/ && chmod -R 0700 /root/.ssh/\""
     - "virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --run-command \"restorecon -Rv /root/.ssh/\""
   when: not bastion_result.stat.exists
+
+- name: Customizing the centos8 VM Template
+  ansible.builtin.shell: "{{ item }}"
+  loop:
+  - "virt-copy-in -a /var/lib/libvirt/images/centos8-kvm.qcow2 /tmp/mongodb-org-3.6.repo /etc/yum.repos.d/"
 
 - name: Check if Bastion is defined
   ansible.builtin.command: virsh dumpxml ocp4-bastion
