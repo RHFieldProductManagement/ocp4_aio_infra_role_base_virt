@@ -32,8 +32,7 @@
   become: True
 
 - name: Get a list of current VM definitions
-  virt:
-    command: list_vms
+  ansible.builtin.command: virsh list --name
   register: vm_list
 
 - name: Check if base RHEL/CentOS 8 already disk image exists
