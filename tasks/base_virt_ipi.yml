@@ -71,8 +71,7 @@
     - ocp4_prov_return.rc == 1
 
 - name: Get a list of current VM definitions
-  community.libvirt.virt:
-    command: list_vms
+  ansible.builtin.command: virsh list --name
   register: vm_list
 
 - name: Create virtual disk images for nodes - don't clobber
@@ -87,7 +86,7 @@
     - "worker1"
     - "worker2"
     - "worker3"
-  when: vm_name not in vm_list.list_vms
+  when: vm_name not in vm_list.stdout_lines
 
 - name: Get a list of currently defined OCS disks
   ansible.builtin.find:
@@ -223,7 +222,7 @@
     - not ocp4_aio_deploy_ocp_plus
     - not ocp4_aio_deploy_big_vms
     - ocp4_aio_deploy_type == "ipi"
-    - vm_name not in vm_list.list_vms
+    - vm_name not in vm_list.stdout_lines
 
 - name: Build Master VM definitions for Openshift Plus IPI
   vars:
@@ -239,7 +238,7 @@
   when:
     - ocp4_aio_deploy_ocp_plus or ocp4_aio_deploy_big_vms
     - ocp4_aio_deploy_type == "ipi"
-    - vm_name not in vm_list.list_vms
+    - vm_name not in vm_list.stdout_lines
 
 - name: Build Master VM definitions for UPI
   vars:
@@ -253,7 +252,7 @@
   with_dict: "{{ vms['masters'] }}"
   when:
     - ocp4_aio_deploy_type == "upi"
-    - vm_name not in vm_list.list_vms
+    - vm_name not in vm_list.stdout_lines
 
 - name: Build Worker VM definitions for IPI
   vars:
@@ -273,7 +272,7 @@
     - not ocp4_aio_deploy_big_vms
     - not ocp4_aio_deploy_compact
     - ocp4_aio_deploy_type == "ipi"
-    - vm_name not in vm_list.list_vms
+    - vm_name not in vm_list.stdout_lines
 
 - name: Build Worker VM definitions for IPI
   vars:
@@ -292,7 +291,7 @@
     - ocp4_aio_deploy_ocp_plus or ocp4_aio_deploy_big_vms
     - not ocp4_aio_deploy_compact
     - ocp4_aio_deploy_type == "ipi"
-    - vm_name not in vm_list.list_vms
+    - vm_name not in vm_list.stdout_lines
 
 - name: Build Worker VM definitions for UPI
   vars:
@@ -309,7 +308,7 @@
   when:
     - not ocp4_aio_deploy_compact
     - ocp4_aio_deploy_type == "upi"
-    - vm_name not in vm_list.list_vms
+    - vm_name not in vm_list.stdout_lines
 
 # - name: Enable firewalld ports for IPI deployments
 #   firewalld:
@@ -563,9 +562,7 @@
   when: not root_ssh_key.stat.exists
 
 - name: Remove the workers in a compact deployment when overridden
-  community.libvirt.virt:
-    name: "ocp4-{{ item }}"
-    command: undefine
+  ansible.builtin.shell: virsh undefine ocp4-{{ item }}
   loop:
     - "worker1"
     - "worker2"
