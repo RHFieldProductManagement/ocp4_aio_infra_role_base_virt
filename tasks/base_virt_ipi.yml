@@ -168,6 +168,21 @@
     - "virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --run-command \"restorecon -Rv /root/.ssh/\""
   when: build_lab|bool and (not bastion_result.stat.exists)
 
+- name: Build Bastion VM definition for IPI
+  ansible.builtin.command: >
+    virt-install --virt-type kvm --ram {{ vms.bastion.mem }} --vcpus {{ vms.bastion.cpus }} --cpu=host-passthrough --os-variant rhel9.0
+    --disk path=/var/lib/libvirt/images/ocp4-bastion.qcow2,device=disk,bus=virtio,format=qcow2
+    --network network:ocp4-net,mac={{ vms.bastion.base_network }}
+    --network network:ocp4-provisioning,mac={{ vms.bastion.prov_network }}
+    --boot hd --noautoconsole --vnc --name ocp4-bastion --boot bios.rebootTimeout=0
+
+- name: Wait 300 seconds for port 22 to become open and contain "OpenSSH"
+  ansible.builtin.wait_for:
+    port: 22
+    host: '192.168.123.100'
+    search_regex: OpenSSH
+    delay: 10
+
 - name: Build Bootstrap VM definition for UPI
   ansible.builtin.command: >
     virt-install --virt-type kvm --ram {{ vms.bootstrap.mem }} --vcpus {{ vms.bootstrap.cpus }} --cpu=host-passthrough --os-variant rhel8.1
@@ -177,14 +192,6 @@
   when:
     - bootstrap_defined.rc|d(0) == 1
     - ocp4_aio_deploy_type == "upi"
-
-- name: Build Bastion VM definition for IPI
-  ansible.builtin.command: >
-    virt-install --virt-type kvm --ram {{ vms.bastion.mem }} --vcpus {{ vms.bastion.cpus }} --cpu=host-passthrough --os-variant rhel9.0
-    --disk path=/var/lib/libvirt/images/ocp4-bastion.qcow2,device=disk,bus=virtio,format=qcow2
-    --network network:ocp4-net,mac={{ vms.bastion.base_network }}
-    --network network:ocp4-provisioning,mac={{ vms.bastion.prov_network }}
-    --boot hd --noautoconsole --vnc --name ocp4-bastion --boot bios.rebootTimeout=0
 
 - name: Build Bastion VM definition for UPI
   ansible.builtin.command: >
