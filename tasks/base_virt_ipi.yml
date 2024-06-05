@@ -229,7 +229,6 @@
     --disk path=/var/lib/libvirt/images/ocp4-{{ item.key }}.qcow2,device=disk,bus=virtio,format=qcow2
     --network network:ocp4-provisioning,mac={{ item.value.prov_network }}
     --network network:ocp4-net,mac={{ item.value.base_network }}
-    --network network:ocp4-flat,mac={{ item.value.flat_network }}
     --boot hd,network --noautoconsole --vnc --name {{ vm_name }} --boot bios.rebootTimeout=0
   with_dict: "{{ vms['masters'] }}"
   when:
@@ -246,7 +245,6 @@
     --disk path=/var/lib/libvirt/images/ocp4-{{ item.key }}.qcow2,device=disk,bus=virtio,format=qcow2
     --network network:ocp4-provisioning,mac={{ item.value.prov_network }}
     --network network:ocp4-net,mac={{ item.value.base_network }}
-    --network network:ocp4-flat,mac={{ item.value.flat_network }}
     --boot hd,network --noautoconsole --vnc --name {{ vm_name }} --boot bios.rebootTimeout=0
   with_dict: "{{ vms['masters_opp'] }}"
   when:
@@ -261,7 +259,6 @@
     virt-install --virt-type kvm --ram {{ item.value.mem }} --vcpus {{ item.value.cpus }} --cpu=host-passthrough --os-variant rhel9.0
     --disk path=/var/lib/libvirt/images/ocp4-{{ item.key }}.qcow2,device=disk,bus=virtio,format=qcow2
     --network network:ocp4-net,mac={{ item.value.base_network }}
-    --network network:ocp4-flat,mac={{ item.value.flat_network }}
     --boot hd,network --noautoconsole --vnc --name ocp4-{{ item.key }} --noreboot
   with_dict: "{{ vms['masters'] }}"
   when:
@@ -278,7 +275,6 @@
     --disk path=/var/lib/libvirt/images/ceph/ocp4-{{ item.key }}-osd2.qcow2,device=disk,bus=virtio,format=qcow2
     --network network:ocp4-provisioning,mac={{ item.value.prov_network }}
     --network network:ocp4-net,mac={{ item.value.base_network }}
-    --network network:ocp4-flat,mac={{ item.value.flat_network }}
     --boot hd,network --noautoconsole --vnc --name ocp4-{{ item.key }} --boot bios.rebootTimeout=0
   with_dict: "{{ vms['workers'] }}"
   when:
@@ -298,7 +294,6 @@
     --disk path=/var/lib/libvirt/images/ceph/ocp4-{{ item.key }}-osd2.qcow2,device=disk,bus=virtio,format=qcow2
     --network network:ocp4-provisioning,mac={{ item.value.prov_network }}
     --network network:ocp4-net,mac={{ item.value.base_network }}
-    --network network:ocp4-flat,mac={{ item.value.flat_network }}
     --boot hd,network --noautoconsole --vnc --name ocp4-{{ item.key }} --boot bios.rebootTimeout=0
   with_dict: "{{ vms['workers_opp'] }}"
   when:
@@ -316,7 +311,6 @@
     --disk path=/var/lib/libvirt/images/ceph/ocp4-{{ item.key }}-osd1.qcow2,device=disk,bus=virtio,format=qcow2
     --disk path=/var/lib/libvirt/images/ceph/ocp4-{{ item.key }}-osd2.qcow2,device=disk,bus=virtio,format=qcow2
     --network network:ocp4-net,mac={{ item.value.base_network }}
-    --network network:ocp4-flat,mac={{ item.value.flat_network }}
     --boot hd,network --noautoconsole --vnc --name ocp4-{{ item.key }} --boot bios.rebootTimeout=0 
   with_dict: "{{ vms['workers'] }}"
   when:
