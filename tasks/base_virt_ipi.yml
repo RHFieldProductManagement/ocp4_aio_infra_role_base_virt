@@ -600,15 +600,6 @@
     force: no
   when: not root_ssh_key.stat.exists
 
-- name: Remove additional extra NIC for masters when not compact
-  ansible.builtin.command: >
-    virsh detach-interface --domain ocp4-{{ item.key }} --type network
-    --mac={{ item.value.flat_network }} --config --persistent
-  with_dict: "{{ vms['masters'] }}"
-  register: nic_detach
-  failed_when: nic_detach.rc > 1
-  when: not ocp4_aio_deploy_compact
-
 - name: Save iptables rules
   ansible.builtin.shell: "iptables-save > /etc/sysconfig/iptables"
 
